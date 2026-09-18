@@ -23,6 +23,13 @@ coverage/
 tpm-state/
 artifacts/
 
+# Local lab evidence and generated TPM objects
+evidence/
+*.ctx
+*.priv
+*.pub
+*.bin
+
 # Secrets and local environment overrides
 .env
 .env.*

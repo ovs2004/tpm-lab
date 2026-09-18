@@ -33,7 +33,20 @@ macOS Apple Silicon
 
 ## Текущий этап
 
-Сейчас выполняется **Sprint 01: инициализация и проектирование**. TPM functionality, runner, VM, `swtpm` и автоматизированные demo **ещё не реализованы и не проверены**. Репозиторий на этом этапе содержит только проектную документацию; в нём нет скрытых или вымышленных `PASS`/`FAIL` результатов.
+Sprint 01 зафиксировал проектный baseline: charter, Architecture v0.1, ТЗ v0.1, backlog, DoD, risks и ADR по Apple Silicon / Linux VM / `swtpm`.
+
+Sprint 02 выполнил ранний ARM64 Docker technical spike с software TPM `swtpm`. Это исследовательский стенд, который снижает риски и валидирует TPM software stack. Он **не заменяет** целевую архитектуру `Mac Apple Silicon -> UTM/QEMU -> Ubuntu ARM64 VM -> virtual TPM/swtpm`. FAPI, ESAPI, Quote, LUKS и `ms-tpm-20-ref` ещё не реализованы.
+
+## Current technical spike
+
+Воспроизводимая ARM64 Docker + `swtpm` laboratory описана в:
+
+- [ARM64 Docker + swtpm technical spike](docs/labs/docker-arm64-swtpm.md)
+- [полный runbook](docs/labs/docker-arm64-swtpm-runbook.md)
+
+Отчёт спринта:
+
+- [Sprint 02](docs/sprints/sprint-02.md)
 
 ## План на 17 недель
 
@@ -55,14 +68,19 @@ docs/
   glossary.md              — краткий словарь терминов
   sprints/                 — еженедельные Sprint records
   demo-notes/              — сценарии и материалы защиты
-infra/                     — будущие setup- и VM-материалы
+  research/                — исследования simulator backends и сравнение с Handbook
+  labs/                    — лабораторные стенды и runbook
+infra/
+  docker-tpm/              — ARM64 Docker + swtpm technical spike
+  vm/                      — будущие материалы целевой UTM/QEMU VM
+  setup/                   — будущие setup-материалы целевой среды
 demos/                     — будущие автоматизированные демонстрации
 src/                       — будущий runner и FAPI/ESAPI programs
 tests/                     — будущие автоматические проверки
 scripts/                   — будущие setup/reset/run scripts
 ```
 
-Каталоги реализации созданы, но содержат только поясняющие README. Исполняемый код, VM configuration и TPM functionality в Sprint 01 отсутствуют.
+Каталоги целевой VM/FAPI/ESAPI реализации содержат поясняющие README. Исполняемый Docker spike Sprint 02 находится в `infra/docker-tpm/` и не является финальным MVP.
 
 ## Как организуется еженедельная работа
 
@@ -85,3 +103,7 @@ scripts/                   — будущие setup/reset/run scripts
 - [GitHub Projects setup](docs/github-projects.md)
 - [Sprint 01](docs/sprints/sprint-01.md)
 - [Sprint 01 defense notes](docs/demo-notes/sprint-01-defense.md)
+- [Sprint 02](docs/sprints/sprint-02.md)
+- [ADR-004: TPM simulator strategy](docs/decisions/ADR-004-simulator-strategy.md)
+- [Исследование TPM simulators](docs/research/tpm-simulators-and-tooling.md)
+- [Сравнение с TPM Handbook](docs/research/tpm-handbook-comparison.md)

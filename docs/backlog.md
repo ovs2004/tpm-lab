@@ -2,6 +2,72 @@
 
 Backlog покрывает все 17 недель. Зависимость `нет` означает отсутствие обязательной предшествующей backlog-задачи, а не отсутствие внешних условий. Owner выполняет задачу, reviewer независимо проверяет acceptance criteria и evidence. Разрешены только роли `Student A` и `Student B`.
 
+## Sprint 02 — выполненные spike-задачи
+
+Эти задачи закрывают ранний research/spike, а не целевую UTM/QEMU VM и не MVP Demo 1–4.
+
+### SIM-001 — Исследовать TPM simulator backends
+- **Status:** Done (Sprint 02)
+- **Описание:** Сравнить `swtpm`, `ms-tpm-20-ref` и QEMU virtual TPM, выбрать основной backend и research stack.
+- **Acceptance criteria:** Есть обоснование `swtpm` как основного backend и план сравнительного эксперимента с `ms-tpm-20-ref`.
+- **Артефакт:** `docs/research/tpm-simulators-and-tooling.md`, `docs/decisions/ADR-004-simulator-strategy.md`.
+
+### SPIKE-001 — ARM64 Docker + swtpm technical spike
+- **Status:** Done (Sprint 02)
+- **Описание:** Развернуть Ubuntu 24.04 ARM64 container и software TPM 2.0 через Docker Desktop на Apple Silicon.
+- **Acceptance criteria:** `uname -m` возвращает `aarch64`; `swtpm` отвечает как TPM 2.0.
+- **Артефакт:** `infra/docker-tpm/`, `docs/labs/docker-arm64-swtpm.md`.
+
+### SPIKE-002 — Direct swtpm TCTI test
+- **Status:** Done (Sprint 02)
+- **Описание:** Подключить `tpm2-tools` к `swtpm` через `TPM2TOOLS_TCTI=swtpm:host=127.0.0.1,port=2321`.
+- **Acceptance criteria:** Discovery, GetRandom и PCR Read/Extend выполняются реальными TPM commands.
+
+### SPIKE-003 — Basic automated runner
+- **Status:** Done (Sprint 02)
+- **Описание:** Собрать positive/negative TPM checks в воспроизводимый runner с evidence.
+- **Acceptance criteria:** `PASS` только после реальных assertions; negative tests требуют фактический TPM rejection; exit code 0 только если FAIL=0.
+- **Артефакт:** `infra/docker-tpm/run-all.sh`.
+
+### SPIKE-004 — Demo 1–4 feasibility spike
+- **Status:** Done (Sprint 02)
+- **Описание:** Проверить реализуемость Discovery, PCR Extend, TPM-backed signing и PCR-bound Seal/Unseal в direct-simulator mode.
+- **Acceptance criteria:** Automated run даёт 10 PASS / 0 FAIL на реальных TPM operations. Это не закрывает MVP Demo 1–4 в целевой VM.
+
+## Sprint 03 — следующий небольшой backlog
+
+Не помечены Done.
+
+### SIM-002 — Bootstrap ms-tpm-20-ref
+- **Status:** Planned
+- **Описание:** Развернуть Microsoft TPM 2.0 Reference Implementation как второй software backend.
+- **Acceptance criteria:** Simulator запускается воспроизводимо; способ старта и initialization задокументированы.
+- **Suggested owner role:** Student A
+- **Reviewer role:** Student B
+
+### SIM-003 — Подключить mssim / basic transport
+- **Status:** Planned
+- **Описание:** Соединить `tpm2-tools` / TPM2-TSS с `ms-tpm-20-ref` через simulator-compatible TCTI (`mssim` или эквивалент).
+- **Acceptance criteria:** Хотя бы одна TPM command проходит; transport и отличия от TCTI `swtpm` описаны.
+- **Зависимость:** SIM-002
+- **Suggested owner role:** Student B
+- **Reviewer role:** Student A
+
+### SIM-004 — Сравнить Discovery / GetRandom / PCR Read / PCR Extend
+- **Status:** Planned
+- **Описание:** Повторить минимальный vendor-neutral набор на `ms-tpm-20-ref` и сравнить со `swtpm`.
+- **Acceptance criteria:** Таблица сравнения заполнена фактическими результатами; знаки `?` не заменяются PASS заранее.
+- **Зависимость:** SIM-003
+- **Suggested owner role:** Student A
+- **Reviewer role:** Student B
+
+### ARCH-005 — QEMU ARM64 vTPM design note
+- **Status:** Planned
+- **Описание:** Подготовить короткий design note перехода `Mac Apple Silicon -> UTM/QEMU ARM64 VM -> Ubuntu -> virtual TPM device -> swtpm`.
+- **Acceptance criteria:** Описаны предполагаемые компоненты, открытые вопросы и критерии будущей validation. Фактическое развёртывание VM не обязательно, если comparative simulator experiment ещё требует отладки.
+- **Suggested owner role:** Student B
+- **Reviewer role:** Student A
+
 ## EPIC-01 Project Management
 
 ### PM-001 — Определить scope проекта

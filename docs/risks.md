@@ -14,3 +14,20 @@
 | R-08 | Scope creep угрожает обязательному MVP | High | High | Приоритизировать Demo 1–4 и runner; Demo 6 оставить optional; новые идеи вести отдельно | Optional work начата до закрытия обязательного Sprint exit criteria |
 | R-09 | Один участник становится единственным техническим contributor | Medium | High | Чередовать technical ownership, назначать второго reviewer и хранить evidence вклада каждую неделю | Большинство technical commits/demo запускает только Student A или только Student B |
 | R-10 | Live demo не работает на семинаре | Medium | High | Использовать preflight, clean reset, rehearsal и диагностический план; не подменять live result записью | Preflight не проходит, demo превышает лимит или зависит от незаписанного ручного шага |
+| R-11 | Исчерпание transient TPM object contexts без resource manager | Medium | High | Явно читать `handles-transient`, вызывать `tpm2_flushcontext`, не полагаться на неявные context files | Появляется `0x902` / `TPM_RC_OBJECT_MEMORY` / `out of memory for object contexts` |
+
+## Sprint 02 status
+
+| ID | Status after Sprint 02 |
+|---|---|
+| R-01 | Остаётся открытым: UTM/QEMU virtual TPM integration ещё не проверялась. |
+| R-02 | Снижен / частично validated: Docker Ubuntu 24.04 ARM64 spike работал как `aarch64`; пакеты `swtpm`, `tpm2-tools` и `libtss2-tcti-swtpm0t64` установились и использовались. |
+| R-03 | Частично снижен в Docker spike: каждый automated run поднимает чистый `swtpm` state. Для целевой VM процедура reset ещё не validated. |
+| R-04 | Частично снижен: PCR 16 reset + независимый SHA-256 assertion прошли в direct-simulator runner. Детерминизм classroom VM demo ещё не проверен. |
+| R-05 | Без изменения: документы продолжают отделять software TPM от hardware protection. |
+| R-06 | Без изменения: FAPI не реализован. |
+| R-07 | Без изменения: ESAPI не реализован. |
+| R-08 | Без изменения: Docker spike не расширяет MVP до LUKS/Quote/FAPI. |
+| R-09 | Без изменения: формальный human review вклада участников здесь не фиксируется. |
+| R-10 | Частично снижен для spike: есть автоматизированный runner и runbook. Live seminar на целевой VM ещё не репетировался. |
+| R-11 | Добавлен по факту Sprint 02: ошибка `0x902` исследована; runner использует dynamic transient handles и `tpm2_flushcontext`. |

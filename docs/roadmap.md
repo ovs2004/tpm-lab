@@ -46,6 +46,8 @@
 - неподтверждённые свойства среды отмечены как assumptions;
 - замечания взаимного review обработаны.
 
+Фактическая работа Sprint 02 дополнительно провела ARM64 Docker technical spike и simulator research; ТЗ остаётся v0.1. Отчёт: [Sprint 02](sprints/sprint-02.md).
+
 ### Sprint 03 — VM architecture and environment design
 
 **Sprint Goal:** спроектировать воспроизводимую ARM64-среду до начала развёртывания.

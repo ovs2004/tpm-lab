@@ -1,7 +1,7 @@
 # TPM Lab — техническая спецификация v0.1
 
-**Версия:** 0.1  
-**Статус:** проектный baseline, Sprint 01  
+**Версия:** 0.1
+**Статус:** проектный baseline; Sprint 02 practically validates часть предположений, но не выпускает новую minor/major версию ТЗ
 **Назначение версии:** определить проверяемый технический контракт до реализации
 
 Эта спецификация описывает целевую систему. Наличие здесь command names и interfaces не означает, что они реализованы или испытаны.
@@ -68,7 +68,15 @@ Configuration contract должен позднее определить:
 5. **tpm2-tools** — CLI clients поверх TPM2-TSS;
 6. **TPM Lab Runner** — orchestration, validation, cleanup и machine-readable status.
 
-Конкретные package versions и выбранный TCTI будут зафиксированы после environment spike, а не предполагаются в v0.1.
+Конкретные package versions целевой VM и выбранный TCTI для UTM/QEMU vTPM будут зафиксированы после environment spike, а не предполагаются как окончательный контракт в v0.1.
+
+Sprint 02 validated один research transport:
+
+```text
+TPM2TOOLS_TCTI=swtpm:host=127.0.0.1,port=2321
+```
+
+Этот TCTI относится к Docker direct-simulator spike. Он не заменяет будущий device TCTI внутри Ubuntu ARM64 VM. Backend/transport должны оставаться заменяемыми там, где это practically возможно: те же TPM scenarios планируется повторить через `mssim` (`ms-tpm-20-ref`) и позднее через TPM device.
 
 ## 7. Основные компоненты
 
@@ -165,7 +173,11 @@ Setup guide, requirements traceability, architecture, demo notes, troubleshootin
 - предоставить idempotent либо явно staged setup;
 - описать clean reset/re-run и последствия сброса;
 - проверять процедуру вторым студентом на clean state;
-- отмечать host-specific deviations и timestamps evidence.
+- отмечать host-specific deviations и timestamps evidence;
+- сохранять raw evidence на каждый automated run;
+- считать negative test успешным только после реального отказа соответствующей TPM operation;
+- не печатать `PASS` до фактической assertion;
+- где practically возможно, отделять TPM scenario от конкретного backend/transport, чтобы одни и те же checks можно было повторить на `swtpm`, `ms-tpm-20-ref` и будущем TPM device.
 
 ## 12. Требования к logging/output
 

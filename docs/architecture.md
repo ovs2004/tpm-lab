@@ -1,7 +1,7 @@
 # Архитектура TPM Lab
 
 **Версия:** 0.1  
-**Статус:** целевая архитектура; реализация и environment validation запланированы на следующие Sprint
+**Статус:** целевая архитектура остаётся baseline; Sprint 02 частично validated ARM64 software stack в Docker direct-simulator mode, но не заменяет VM/vTPM стенд
 
 ## 1. Deployment architecture
 
@@ -171,3 +171,27 @@ ESAPI (Enhanced System API) — более низкоуровневый API TPM2
 - **Stage 3 (недели 13–17):** добавить FAPI/ESAPI comparison, hardening и финальный demo.
 
 Любое изменение границ или замена `swtpm`/TCTI оформляется Architecture Decision Record и отражается в requirements traceability.
+
+## 10. Sprint 02 validation status
+
+Architecture v0.1 остаётся baseline. Целевой стенд по-прежнему:
+
+```text
+Mac Apple Silicon -> UTM/QEMU -> Ubuntu ARM64 VM -> TPM stack -> virtual TPM / swtpm
+```
+
+В Sprint 02 Docker + direct TCTI `swtpm` использован как early technical spike, а не как новая финальная архитектура.
+
+Практически подтверждено в direct-simulator режиме:
+
+- ARM64 compatibility Ubuntu 24.04 / `aarch64` container;
+- цепочка `tpm2-tools -> TPM2-TSS -> TCTI swtpm -> swtpm`;
+- security scenarios Demo 1–4 на уровне feasibility spike.
+
+Ещё не validated:
+
+- UTM/QEMU virtual TPM integration;
+- guest workflow через `/dev/tpm0` или `/dev/tpmrm0`;
+- сравнительный backend `ms-tpm-20-ref`.
+
+Финальная архитектура проекта остаётся VM-based. Подробности spike: [Sprint 02](sprints/sprint-02.md), [ADR-004](decisions/ADR-004-simulator-strategy.md).

@@ -79,3 +79,5 @@ Define the project, establish scope and create the first defensible architecture
 ## Next Sprint
 
 Sprint 02 уточнит stakeholder needs, use cases, functional и non-functional requirements, threat assumptions, версии компонентов, интерфейсы host/guest/TPM и измеримые критерии валидации. Результатом должна стать reviewable specification и план минимального proof of concept; полная лаборатория в Sprint 02 не реализуется.
+
+Фактический отчёт следующего спринта: [Sprint 02](sprint-02.md).
