@@ -35,14 +35,14 @@ macOS Apple Silicon
 
 Sprint 01 зафиксировал проектный baseline: charter, Architecture v0.1, ТЗ v0.1, backlog, DoD, risks и ADR по Apple Silicon / Linux VM / `swtpm`.
 
-Sprint 02 выполнил ранний ARM64 Docker technical spike с software TPM `swtpm`. Это исследовательский стенд, который снижает риски и валидирует TPM software stack. Он **не заменяет** целевую архитектуру `Mac Apple Silicon -> UTM/QEMU -> Ubuntu ARM64 VM -> virtual TPM/swtpm`. FAPI, ESAPI, Quote, LUKS и `ms-tpm-20-ref` ещё не реализованы.
+Sprint 02 выполнил ранний ARM64 Docker technical spike с software TPM `swtpm`. После него тот же набор проверок повторён на Microsoft TPM 2.0 Reference Implementation (`ms-tpm-20-ref`). Это исследовательские стенды, которые снижают риски и валидируют TPM software stack. Они **не заменяют** целевую архитектуру `Mac Apple Silicon -> UTM/QEMU -> Ubuntu ARM64 VM -> virtual TPM/swtpm`. FAPI, ESAPI, Quote и LUKS ещё не реализованы.
 
 ## Current technical spike
 
-Воспроизводимая ARM64 Docker + `swtpm` laboratory описана в:
+Воспроизводимые ARM64 Docker laboratories:
 
-- [ARM64 Docker + swtpm technical spike](docs/labs/docker-arm64-swtpm.md)
-- [полный runbook](docs/labs/docker-arm64-swtpm-runbook.md)
+- [ARM64 Docker + swtpm](docs/labs/docker-arm64-swtpm.md) — [runbook](docs/labs/docker-arm64-swtpm-runbook.md)
+- [ARM64 Docker + ms-tpm-20-ref](docs/labs/docker-arm64-mssim.md) — [runbook](docs/labs/docker-arm64-mssim-runbook.md)
 
 Отчёт спринта:
 
@@ -71,7 +71,7 @@ docs/
   research/                — исследования simulator backends и сравнение с Handbook
   labs/                    — лабораторные стенды и runbook
 infra/
-  docker-tpm/              — ARM64 Docker + swtpm technical spike
+  docker-tpm/              — ARM64 Docker + swtpm и ms-tpm-20-ref technical spikes
   vm/                      — будущие материалы целевой UTM/QEMU VM
   setup/                   — будущие setup-материалы целевой среды
 demos/                     — будущие автоматизированные демонстрации
@@ -107,3 +107,5 @@ scripts/                   — будущие setup/reset/run scripts
 - [ADR-004: TPM simulator strategy](docs/decisions/ADR-004-simulator-strategy.md)
 - [Исследование TPM simulators](docs/research/tpm-simulators-and-tooling.md)
 - [Сравнение с TPM Handbook](docs/research/tpm-handbook-comparison.md)
+- [ARM64 Docker + ms-tpm-20-ref](docs/labs/docker-arm64-mssim.md)
+- [Дизайн runner](docs/labs/runner-design.md)

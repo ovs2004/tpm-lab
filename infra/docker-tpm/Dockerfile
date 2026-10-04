@@ -17,10 +17,12 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /lab
 
 COPY infra/docker-tpm/start-swtpm.sh /usr/local/bin/start-swtpm
+COPY infra/docker-tpm/run-checks.sh /lab/run-checks.sh
 COPY infra/docker-tpm/run-all.sh /lab/run-all.sh
 
 RUN chmod +x \
     /usr/local/bin/start-swtpm \
+    /lab/run-checks.sh \
     /lab/run-all.sh
 
 ENV TPM2TOOLS_TCTI=swtpm:host=127.0.0.1,port=2321

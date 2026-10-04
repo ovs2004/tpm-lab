@@ -1,0 +1,69 @@
+FROM ubuntu:24.04 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Pinned upstream commit: TPM 2.0 reference v183.
+ARG MS_TPM_REF_REV=ee21db0a941decd3cac67925ea3310873af60ab3
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    autoconf \
+    autoconf-archive \
+    automake \
+    libtool \
+    pkg-config \
+    gcc \
+    make \
+    git \
+    ca-certificates \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /tmp/src
+RUN git init ms-tpm-20-ref \
+    && cd ms-tpm-20-ref \
+    && git remote add origin https://github.com/microsoft/ms-tpm-20-ref.git \
+    && git fetch --depth 1 origin "$MS_TPM_REF_REV" \
+    && git checkout --detach FETCH_HEAD \
+    && cd TPMCmd \
+    && ./bootstrap \
+    && ./configure \
+    && make -j"$(nproc)" \
+    && mkdir -p /opt/ms-tpm-20-ref \
+    && cp Simulator/src/tpm2-simulator /opt/ms-tpm-20-ref/tpm2-simulator \
+    && git rev-parse HEAD > /opt/ms-tpm-20-ref/REVISION
+
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    tpm2-tools \
+    libtss2-tcti-mssim0t64 \
+    libssl3 \
+    openssl \
+    python3 \
+    jq \
+    vim-common \
+    procps \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/ms-tpm-20-ref/tpm2-simulator /opt/ms-tpm-20-ref/tpm2-simulator
+COPY --from=builder /opt/ms-tpm-20-ref/REVISION /opt/ms-tpm-20-ref/REVISION
+
+WORKDIR /lab
+
+COPY infra/docker-tpm/start-mssim.sh /usr/local/bin/start-mssim
+COPY infra/docker-tpm/run-checks.sh /lab/run-checks.sh
+COPY infra/docker-tpm/run-all-mssim.sh /lab/run-all-mssim.sh
+
+RUN chmod +x \
+    /opt/ms-tpm-20-ref/tpm2-simulator \
+    /usr/local/bin/start-mssim \
+    /lab/run-checks.sh \
+    /lab/run-all-mssim.sh
+
+ENV TPM2TOOLS_TCTI=mssim:host=127.0.0.1,port=2321
+
+CMD ["/bin/bash"]

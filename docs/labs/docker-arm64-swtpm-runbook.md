@@ -63,6 +63,8 @@ ARM64, а не как x86_64 container.
 
 ---
 
+
+
 ## 2. Запуск интерактивного контейнера
 
 Для ручных экспериментов:
@@ -71,7 +73,6 @@ ARM64, а не как x86_64 container.
 docker run \
   --rm \
   -it \
-  --name tpm-demo \
   tpm-lab-demo
 ```
 
@@ -91,6 +92,8 @@ root@<container-id>:/lab#
 автоматический runner с mounted volume.
 
 ---
+
+
 
 ## 3. Запуск swtpm вручную
 
@@ -114,12 +117,12 @@ swtpm socket \
 
 Параметры:
 
-* `--tpm2` — TPM 2.0;
-* `--tpmstate` — каталог внутреннего состояния software TPM;
-* port `2321` — TPM command channel;
-* port `2322` — control channel;
-* `startup-clear` — лабораторный startup state;
-* `--daemon` — процесс остаётся работать в фоне.
+- `--tpm2` — TPM 2.0;
+- `--tpmstate` — каталог внутреннего состояния software TPM;
+- port `2321` — TPM command channel;
+- port `2322` — control channel;
+- `startup-clear` — лабораторный startup state;
+- `--daemon` — процесс остаётся работать в фоне.
 
 Теперь сообщить `tpm2-tools`, куда отправлять TPM commands:
 
@@ -137,17 +140,23 @@ tpm2_getcap properties-fixed
 
 ---
 
+
+
 # TEST 1. TPM Discovery
+
+
 
 ## Цель
 
 Проверить:
 
-* доступен ли TPM;
-* TPM 2.0 ли это;
-* какие свойства сообщает simulator;
-* сколько PCR;
-* какие algorithms/PCR banks доступны.
+- доступен ли TPM;
+- TPM 2.0 ли это;
+- какие свойства сообщает simulator;
+- сколько PCR;
+- какие algorithms/PCR banks доступны.
+
+
 
 ### Короткий вывод
 
@@ -200,17 +209,19 @@ PCR banks:
 tpm2_getcap pcrs
 ```
 
-В нашем стенде были доступны PCR 0..23 в нескольких hash banks,
+В нашем стенде были доступны PCR 0..23 в нескольких hash banks,  
 включая SHA-256.
-
-### Что сказать преподавателю
 
 > Проверили коммуникацию через TPM2-TSS/TCTI до software TPM.
 > Реализация отвечает как TPM 2.0 и сообщает стандартные capabilities.
 
 ---
 
+
+
 # TEST 2. TPM GetRandom
+
+
 
 ## Цель
 
@@ -235,18 +246,22 @@ done
 32 hex characters = 16 bytes
 ```
 
+
+
 ### Что этот тест НЕ означает
 
-Поскольку используется software TPM, нельзя утверждать, что
+Поскольку используется software TPM, нельзя утверждать, что  
 исследуется физический аппаратный random source.
-
-### Что сказать преподавателю
 
 > Дополнительно проверили GetRandom через тот же TPM command stack.
 
 ---
 
+
+
 # TEST 3. PCR Read / Extend
+
+
 
 ## 3.1 Сброс лабораторного PCR 16
 
@@ -323,6 +338,8 @@ PCR_new = SHA256(PCR_old || measurement)
 PCR = measurement
 ```
 
+
+
 ## 3.4 Независимо проверить результат
 
 Сначала сохранить значения вручную либо использовать automated runner.
@@ -350,12 +367,12 @@ PY
 Для ручной работы удобнее использовать automated runner, который
 подставляет значения сам.
 
-### Что сказать преподавателю
-
 > PCR Extend проверяется не только exit code. Мы отдельно считаем
 > SHA256(oldPCR || measurement) и сравниваем его с фактическим TPM PCR.
 
 ---
+
+
 
 # TEST 4. TPM transient objects и troubleshooting
 
@@ -399,6 +416,8 @@ TPM resource/context management.
 
 ---
 
+
+
 # TEST 5. TPM-backed RSA Sign / Verify
 
 Сначала очистить objects:
@@ -414,6 +433,8 @@ mkdir -p /lab/signing
 cd /lab/signing
 rm -f ./*
 ```
+
+
 
 ## 5.1 Primary Object
 
@@ -482,6 +503,8 @@ SIGNING_HANDLE="$(
 echo "$SIGNING_HANDLE"
 ```
 
+
+
 ## 5.3 Positive test
 
 ```bash
@@ -511,6 +534,8 @@ else
     echo "[FAIL] Original message verification failed"
 fi
 ```
+
+
 
 ## 5.4 Negative test
 
@@ -543,8 +568,6 @@ the signature is not valid
 
 Ошибка TPM здесь является ожидаемым результатом negative test.
 
-### Что сказать преподавателю
-
 > Ключ используется через TPM object. Оригинальное сообщение проходит
 > проверку, а изменённое сообщение с той же подписью TPM отвергает.
 
@@ -555,6 +578,8 @@ tpm2_flushcontext -t >/dev/null 2>&1 || true
 ```
 
 ---
+
+
 
 # TEST 6. Basic Seal / Unseal
 
@@ -631,8 +656,6 @@ tpm2_unseal -c "$SEALED_HANDLE"
 SUPER_SECRET_TPM_LAB
 ```
 
-### Что сказать преподавателю
-
 > Сначала отдельно проверили базовый Seal/Unseal, прежде чем добавлять
 > зависимость от PCR policy.
 
@@ -643,6 +666,8 @@ tpm2_flushcontext -t >/dev/null 2>&1 || true
 ```
 
 ---
+
+
 
 # TEST 7. PCR-bound Seal / Unseal
 
@@ -666,6 +691,8 @@ Trusted state:
 tpm2_pcrread sha256:16
 ```
 
+
+
 ## 7.1 Создать parent
 
 ```bash
@@ -683,6 +710,8 @@ PRIMARY_HANDLE="$(
 )"
 ```
 
+
+
 ## 7.2 Сохранить trusted PCR
 
 ```bash
@@ -690,6 +719,8 @@ tpm2_pcrread \
   -o pcr.dat \
   sha256:16
 ```
+
+
 
 ## 7.3 Создать PCR policy
 
@@ -706,6 +737,8 @@ tpm2_createpolicy \
 ```text
 bff2d58e9813f97cefc14f72ad8133bc7092d652b7c877959254af140c841f36
 ```
+
+
 
 ## 7.4 Создать policy-bound object
 
@@ -739,6 +772,8 @@ SEALED_HANDLE="$(
   | tail -1
 )"
 ```
+
+
 
 ## 7.5 Trusted policy session
 
@@ -775,6 +810,8 @@ Flush policy session:
 tpm2_flushcontext trusted-session.ctx
 ```
 
+
+
 ## 7.6 Изменить PCR
 
 Создать artificial measurement:
@@ -810,6 +847,8 @@ tpm2_pcrread sha256:16
 ```text
 004A4BA3E0B0C25FDF42989282DA4821C5F821BCBFD3F15723C5153EFDCD1049
 ```
+
+
 
 ## 7.7 Tampered policy session
 
@@ -852,13 +891,13 @@ TPM rejects operation
 a policy check failed
 ```
 
-### Что сказать преподавателю
-
 > Один и тот же sealed object можно открыть в trusted PCR state.
 > После реального PCR Extend TPM policy больше не удовлетворяется,
 > поэтому уже TPM сам запрещает Unseal.
 
 ---
+
+
 
 # TEST 8. Полностью автоматизированный runner
 
@@ -926,6 +965,8 @@ ls -R evidence
 
 ---
 
+
+
 # Быстрый запуск перед демонстрацией
 
 Из корня repo:
@@ -946,3 +987,5 @@ docker run --rm \
 ```
 
 Этого достаточно для повторения полного Sprint 02 technical spike.
+
+Тот же набор на втором simulator: [ARM64 Docker + ms-tpm-20-ref runbook](docker-arm64-mssim-runbook.md).

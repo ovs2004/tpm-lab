@@ -90,6 +90,12 @@ implementation TPM 2.0.
 Signing и Seal/Unseal являются stretch goals и не считаются
 обязательной частью следующего спринта.
 
+Прогон после этого сделан шире обещанного минимума: тот же runner,
+включая подпись и PCR policy, прошёл на `ms-tpm-20-ref` с результатом
+10 PASS / 0 FAIL. Разбор совпадений, чужих simulator и того, что ARM
+здесь ещё не показывает, вынесен отдельно:
+[два software TPM на ARM64](two-simulators-arm64.md).
+
 ## 3. QEMU virtual TPM
 
 QEMU рассматривается не как отдельная реализация всей TPM logic,
@@ -215,7 +221,10 @@ security operation через:
 * ESAPI — более явный интерфейс с управлением objects, sessions и
   последовательностью TPM operations.
 
-На Sprint 02 FAPI/ESAPI ещё не реализованы.
+На Sprint 02 FAPI/ESAPI ещё не реализованы. Позже это отдельное
+сравнение одних и тех же операций, не замена своему коду поверх
+simulator: [ESAPI и FAPI](fapi-esapi-later.md),
+[свои программы](programs-over-simulator.md).
 
 ## Вывод
 
@@ -230,8 +239,18 @@ software stack.
 QEMU/UTM vTPM остаётся целевой архитектурой стенда, а текущий Docker
 direct-TCTI вариант используется как быстрый technical spike.
 
+Сравнительный прогон Discovery, GetRandom, PCR Read/Extend и остальных
+checks первого runner на `ms-tpm-20-ref` выполнен отдельно и записан
+в [ARM64 Docker + ms-tpm-20-ref](../labs/docker-arm64-mssim.md).
+`swtpm` остаётся основным backend.
+
 Связанные документы:
 
 - [ADR-004: TPM simulator strategy](../decisions/ADR-004-simulator-strategy.md)
 - [ARM64 Docker + swtpm technical spike](../labs/docker-arm64-swtpm.md)
+- [ARM64 Docker + ms-tpm-20-ref technical spike](../labs/docker-arm64-mssim.md)
+- [Два software TPM на ARM64](two-simulators-arm64.md)
+- [ARM64 и x86_64](arm64-vs-x86-tpm.md)
+- [Программы поверх simulator](programs-over-simulator.md)
+- [ESAPI и FAPI позже](fapi-esapi-later.md)
 - [Sprint 02](../sprints/sprint-02.md)

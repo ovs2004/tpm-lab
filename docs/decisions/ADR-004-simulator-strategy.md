@@ -97,3 +97,8 @@ swtpm backend
 * direct socket access не эквивалентен TPM device в guest OS;
 * physical tamper resistance не моделируется;
 * QEMU/UTM integration всё ещё требует отдельной практической проверки.
+
+Stage B после принятия этого ADR выполнен: тот же automated набор
+прогнан на `ms-tpm-20-ref` через TCTI `mssim`. Результат и отличия
+транспорта записаны в [ARM64 Docker + ms-tpm-20-ref](../labs/docker-arm64-mssim.md).
+Решение оставить `swtpm` основным backend не меняется.

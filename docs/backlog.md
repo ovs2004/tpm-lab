@@ -36,28 +36,31 @@ Backlog покрывает все 17 недель. Зависимость `не�
 
 ## Sprint 03 — следующий небольшой backlog
 
-Не помечены Done.
+SIM-002, SIM-003 и SIM-004 закрыты фактическим прогоном. ARCH-005 остаётся Planned.
 
 ### SIM-002 — Bootstrap ms-tpm-20-ref
-- **Status:** Planned
+- **Status:** Done
 - **Описание:** Развернуть Microsoft TPM 2.0 Reference Implementation как второй software backend.
 - **Acceptance criteria:** Simulator запускается воспроизводимо; способ старта и initialization задокументированы.
+- **Артефакт:** `infra/docker-tpm/Dockerfile.mssim`, `infra/docker-tpm/start-mssim.sh`, `docs/labs/docker-arm64-mssim-runbook.md`.
 - **Suggested owner role:** Student A
 - **Reviewer role:** Student B
 
 ### SIM-003 — Подключить mssim / basic transport
-- **Status:** Planned
+- **Status:** Done
 - **Описание:** Соединить `tpm2-tools` / TPM2-TSS с `ms-tpm-20-ref` через simulator-compatible TCTI (`mssim` или эквивалент).
 - **Acceptance criteria:** Хотя бы одна TPM command проходит; transport и отличия от TCTI `swtpm` описаны.
 - **Зависимость:** SIM-002
+- **Артефакт:** `docs/labs/docker-arm64-mssim.md`.
 - **Suggested owner role:** Student B
 - **Reviewer role:** Student A
 
 ### SIM-004 — Сравнить Discovery / GetRandom / PCR Read / PCR Extend
-- **Status:** Planned
+- **Status:** Done
 - **Описание:** Повторить минимальный vendor-neutral набор на `ms-tpm-20-ref` и сравнить со `swtpm`.
 - **Acceptance criteria:** Таблица сравнения заполнена фактическими результатами; знаки `?` не заменяются PASS заранее.
 - **Зависимость:** SIM-003
+- **Артефакт:** таблица в `docs/labs/docker-arm64-mssim.md`. Полный runner дополнительно дал 10 PASS / 0 FAIL.
 - **Suggested owner role:** Student A
 - **Reviewer role:** Student B
 

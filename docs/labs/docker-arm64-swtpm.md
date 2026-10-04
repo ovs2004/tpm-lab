@@ -248,3 +248,7 @@ Linux VM видит `/dev/tpm0` или `/dev/tpmrm0`.
 
 Эта граница является причиной следующего перехода к virtual TPM
 architecture.
+
+Тот же набор проверок после этого стенда повторён на втором software
+backend: [ARM64 Docker + ms-tpm-20-ref](docker-arm64-mssim.md).
+`swtpm` остаётся основным backend.
