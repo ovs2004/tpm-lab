@@ -37,7 +37,8 @@ Sprint 02 не заменяет Architecture v0.1 и ТЗ v0.1.
 Основным software TPM backend выбран `swtpm`.
 
 `ms-tpm-20-ref` выбран как дополнительная implementation для
-следующего сравнительного эксперимента.
+следующего сравнительного эксперимента. Фактический отчёт этого
+эксперимента: [Sprint 03](sprint-03.md).
 
 Документы:
 
@@ -235,7 +236,7 @@ TPM Lab сохраняет другой фокус:
 
 * UTM/QEMU ARM64 virtual TPM integration;
 * `/dev/tpm0` / `/dev/tpmrm0` guest workflow;
-* ms-tpm-20-ref comparative run;
+* ms-tpm-20-ref comparative run (закрыто в Sprint 03);
 * FAPI code;
 * ESAPI code;
 * Quote / remote attestation;
@@ -306,6 +307,8 @@ swtpm
 Фактическое развёртывание этой VM не является обязательным deliverable
 следующего спринта, если comparative simulator experiment ещё требует
 отладки.
+
+Фактический отчёт следующего спринта: [Sprint 03](sprint-03.md).
 
 ## Slide-ready summary
 

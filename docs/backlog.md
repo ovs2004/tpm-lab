@@ -34,12 +34,12 @@ Backlog покрывает все 17 недель. Зависимость `не�
 - **Описание:** Проверить реализуемость Discovery, PCR Extend, TPM-backed signing и PCR-bound Seal/Unseal в direct-simulator mode.
 - **Acceptance criteria:** Automated run даёт 10 PASS / 0 FAIL на реальных TPM operations. Это не закрывает MVP Demo 1–4 в целевой VM.
 
-## Sprint 03 — следующий небольшой backlog
+## Sprint 03 — выполненные comparative-задачи
 
-SIM-002, SIM-003 и SIM-004 закрыты фактическим прогоном. ARCH-005 остаётся Planned.
+SIM-002, SIM-003 и SIM-004 закрыты в Sprint 03 фактическим прогоном `ms-tpm-20-ref`. ARCH-005 остаётся Planned на следующий спринт.
 
 ### SIM-002 — Bootstrap ms-tpm-20-ref
-- **Status:** Done
+- **Status:** Done (Sprint 03)
 - **Описание:** Развернуть Microsoft TPM 2.0 Reference Implementation как второй software backend.
 - **Acceptance criteria:** Simulator запускается воспроизводимо; способ старта и initialization задокументированы.
 - **Артефакт:** `infra/docker-tpm/Dockerfile.mssim`, `infra/docker-tpm/start-mssim.sh`, `docs/labs/docker-arm64-mssim-runbook.md`.
@@ -47,7 +47,7 @@ SIM-002, SIM-003 и SIM-004 закрыты фактическим прогоно
 - **Reviewer role:** Student B
 
 ### SIM-003 — Подключить mssim / basic transport
-- **Status:** Done
+- **Status:** Done (Sprint 03)
 - **Описание:** Соединить `tpm2-tools` / TPM2-TSS с `ms-tpm-20-ref` через simulator-compatible TCTI (`mssim` или эквивалент).
 - **Acceptance criteria:** Хотя бы одна TPM command проходит; transport и отличия от TCTI `swtpm` описаны.
 - **Зависимость:** SIM-002
@@ -56,7 +56,7 @@ SIM-002, SIM-003 и SIM-004 закрыты фактическим прогоно
 - **Reviewer role:** Student A
 
 ### SIM-004 — Сравнить Discovery / GetRandom / PCR Read / PCR Extend
-- **Status:** Done
+- **Status:** Done (Sprint 03)
 - **Описание:** Повторить минимальный vendor-neutral набор на `ms-tpm-20-ref` и сравнить со `swtpm`.
 - **Acceptance criteria:** Таблица сравнения заполнена фактическими результатами; знаки `?` не заменяются PASS заранее.
 - **Зависимость:** SIM-003

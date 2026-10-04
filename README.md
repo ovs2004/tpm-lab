@@ -33,20 +33,26 @@ macOS Apple Silicon
 
 ## Текущий этап
 
-Sprint 01 зафиксировал проектный baseline: charter, Architecture v0.1, ТЗ v0.1, backlog, DoD, risks и ADR по Apple Silicon / Linux VM / `swtpm`.
+Выполнены три спринта. Целевая архитектура `Mac Apple Silicon -> UTM/QEMU -> Ubuntu ARM64 VM -> virtual TPM/swtpm` ещё не развёрнута. FAPI, ESAPI, Quote и LUKS не реализованы.
 
-Sprint 02 выполнил ранний ARM64 Docker technical spike с software TPM `swtpm`. После него тот же набор проверок повторён на Microsoft TPM 2.0 Reference Implementation (`ms-tpm-20-ref`). Это исследовательские стенды, которые снижают риски и валидируют TPM software stack. Они **не заменяют** целевую архитектуру `Mac Apple Silicon -> UTM/QEMU -> Ubuntu ARM64 VM -> virtual TPM/swtpm`. FAPI, ESAPI, Quote и LUKS ещё не реализованы.
+- **Sprint 01** — проектный baseline: charter, Architecture v0.1, ТЗ v0.1, backlog, DoD, risks и ADR по Apple Silicon / Linux VM / `swtpm`.
+- **Sprint 02** — ARM64 Docker technical spike с software TPM `swtpm` и общий набор TPM-проверок (10 PASS / 0 FAIL).
+- **Sprint 03** — тот же набор на Microsoft TPM 2.0 Reference Implementation (`ms-tpm-20-ref`) через TCTI `mssim` (снова 10 PASS / 0 FAIL).
+
+Это исследовательские стенды: они валидируют TPM software stack и не заменяют будущую VM.
 
 ## Current technical spike
 
 Воспроизводимые ARM64 Docker laboratories:
 
-- [ARM64 Docker + swtpm](docs/labs/docker-arm64-swtpm.md) — [runbook](docs/labs/docker-arm64-swtpm-runbook.md)
-- [ARM64 Docker + ms-tpm-20-ref](docs/labs/docker-arm64-mssim.md) — [runbook](docs/labs/docker-arm64-mssim-runbook.md)
+- [ARM64 Docker + swtpm](docs/labs/docker-arm64-swtpm.md) — [runbook](docs/labs/docker-arm64-swtpm-runbook.md) — Sprint 02
+- [ARM64 Docker + ms-tpm-20-ref](docs/labs/docker-arm64-mssim.md) — [runbook](docs/labs/docker-arm64-mssim-runbook.md) — Sprint 03
 
-Отчёт спринта:
+Отчёты спринтов:
 
+- [Sprint 01](docs/sprints/sprint-01.md)
 - [Sprint 02](docs/sprints/sprint-02.md)
+- [Sprint 03](docs/sprints/sprint-03.md)
 
 ## План на 17 недель
 
@@ -80,7 +86,7 @@ tests/                     — будущие автоматические пр�
 scripts/                   — будущие setup/reset/run scripts
 ```
 
-Каталоги целевой VM/FAPI/ESAPI реализации содержат поясняющие README. Исполняемый Docker spike Sprint 02 находится в `infra/docker-tpm/` и не является финальным MVP.
+Каталоги целевой VM/FAPI/ESAPI реализации содержат поясняющие README. Исполняемые Docker spikes Sprint 02 (`swtpm`) и Sprint 03 (`ms-tpm-20-ref`) находятся в `infra/docker-tpm/` и не являются финальным MVP.
 
 ## Как организуется еженедельная работа
 
@@ -104,6 +110,7 @@ scripts/                   — будущие setup/reset/run scripts
 - [Sprint 01](docs/sprints/sprint-01.md)
 - [Sprint 01 defense notes](docs/demo-notes/sprint-01-defense.md)
 - [Sprint 02](docs/sprints/sprint-02.md)
+- [Sprint 03](docs/sprints/sprint-03.md)
 - [ADR-004: TPM simulator strategy](docs/decisions/ADR-004-simulator-strategy.md)
 - [Исследование TPM simulators](docs/research/tpm-simulators-and-tooling.md)
 - [Сравнение с TPM Handbook](docs/research/tpm-handbook-comparison.md)

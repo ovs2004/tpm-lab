@@ -50,7 +50,9 @@
 
 ### Sprint 03 — VM architecture and environment design
 
-**Sprint Goal:** спроектировать воспроизводимую ARM64-среду до начала развёртывания.
+**Фактически:** Sprint 03 выполнен как comparative spike `ms-tpm-20-ref` по плану, зафиксированному в конце Sprint 02. Отчёт: [Sprint 03](sprints/sprint-03.md). Исходный VM environment design (ARCH-005) переносится на следующий спринт.
+
+**Исходный Sprint Goal:** спроектировать воспроизводимую ARM64-среду до начала развёртывания.
 
 **Candidate tasks:**
 - выбрать конфигурацию UTM/QEMU для Ubuntu 24.04 ARM64;
