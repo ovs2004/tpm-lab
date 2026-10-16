@@ -1,98 +1,131 @@
-# Sprint 04 — QEMU ARM64 virtual TPM
+# Sprint 04 — виртуальная машина и два уровня API
 
-## Sprint goal
+## Цель
 
-Вернуться к целевой среде:
+До этого спринта TPM отвечал только по сети из Docker: программа
+`tpm2-tools` открывала TCP-сокет `swtpm`. В архитектуре проекта гость
+должен видеть TPM как устройство. Sprint 04 это и проверяет.
+
+Цепочка:
 
 ```text
 Mac Apple Silicon
- ->
-QEMU ARM64 VM
- ->
-Ubuntu
- ->
-virtual TPM device
- ->
-swtpm
+ -> QEMU, машина virt, ускоритель HVF
+ -> Ubuntu 24.04.5 ARM64
+ -> /dev/tpm0 и /dev/tpmrm0
+ -> swtpm на Mac
 ```
 
-Обязательный результат — design note ARCH-005: конфигурация VM,
-подключение `swtpm`, reset и открытые вопросы. Развёртывание VM
-входило в спринт, потому что этого описания достаточно для
-повторяемой установки.
+`QEMU` запускает гостевую систему. `HVF` — аппаратная виртуализация
+Apple, гость ARM64 идёт без эмуляции x86. `swtpm` — программа,
+которая отвечает на команды TPM 2.0 и хранит состояние в каталоге
+на Mac. `libtpms` — библиотека внутри `swtpm`, в ней считаются AES,
+Camellia, RSA и PCR.
 
-Параллельно, не вместо VM: тонкий ESAPI-модуль поверх уже
-проверенного simulator socket.
+Рядом с машиной, на старом сокетном стенде, те же операции записаны
+своим кодом. `ESAPI` — уровень TPM2-TSS, где видны primary, session
+и flush. `FAPI` — уровень выше: те же действия занимают несколько
+команд `tss2`, session библиотека ведёт сама.
 
-## Planned
+## Что планировали
 
-* ARCH-005: design note;
-* воспроизводимый запуск Ubuntu 24.04 ARM64 в QEMU на Apple Silicon;
-* virtual TPM через `swtpm` и устройство в госте;
-* reset/re-run;
-* тот же набор проверок, что Sprint 02, но через `/dev/tpmrm0`;
-* если VM не блокирует остальное — модуль `tpm2-pytss` на сокете.
+* Записку ARCH-005: как собрана VM, как подключён `swtpm`, как сбросить состояние.
+* Загрузку Ubuntu 24.04 ARM64 и устройство TPM в госте.
+* Тот же набор проверок, что в Sprint 02, но через `/dev/tpmrm0`.
+* Если машина не займёт весь спринт — вызовы TPM из своего кода, без оболочки над `tpm2`.
 
-## Completed
+## Что получилось
 
-### Design note
+### Машина
 
-[ARCH-005](../labs/qemu-arm64-vtpm.md) фиксирует машину `virt` + HVF,
-`tpm-tis-device`, unix socket swtpm и отличие от direct-socket spike:
-`TPM2_Startup` делает гость, не флаг `startup-clear`.
+Записка и команды: [ARCH-005](../labs/qemu-arm64-vtpm.md),
+[runbook](../labs/qemu-arm64-vtpm-runbook.md). Скрипт
+`infra/vm/run-lab.sh up` на этом Mac поднял гостя. Повтор с нуля
+делается так: `run-lab.sh reset`, затем снова `up`. Образ диска и
+ключ SSH скрипт создаёт локально, в `infra/vm/runtime/`, в репозиторий
+они не входят.
 
-UTM 4.6.4 установлен. Лабораторный путь — та же модель QEMU
-скриптом, чтобы reset был повторяемым. Apple Virtualization
-не используется: у него нет virtual TPM. Устройства `tpm-crb-device`
-в QEMU 10.1.0 для aarch64 нет.
+UTM 4.6.4 на Mac установлен. Это графическая оболочка над тем же
+QEMU. В репозитории лежит командная строка, её можно сбросить и
+сравнить. Встроенная виртуализация Apple отдельного TPM гостю не
+отдаёт, поэтому стенд идёт через QEMU. У QEMU 10.1 для aarch64 нет
+устройства `tpm-crb` (так TPM вешают на x86). Есть `tpm-tis-device`:
+регистры TPM, которые Linux находит по таблице ACPI.
 
-### Работающий гость
-
-Прогон `infra/vm/run-lab.sh up` на этом Mac:
+Гость после загрузки:
 
 ```text
 Linux tpm-lab 6.8.0-142-generic aarch64
-PRETTY_NAME=Ubuntu 24.04.5 LTS
-uid=1000(ubuntu) groups=1000(ubuntu),111(tss)
+Ubuntu 24.04.5 LTS
+группы пользователя: ubuntu, tss
 /dev/tpm0    tss:root
 /dev/tpmrm0  tss:tss
 tpm_tis MSFT0101:00: 2.0 TPM (device-id 0x1, rev-id 1)
 ```
 
-Discovery через `device:/dev/tpmrm0`:
+`/dev/tpm0` — само устройство. `/dev/tpmrm0` — resource manager ядра:
+через него несколько программ делят один TPM, не занимая устройство
+монопольно. Группа `tss` нужна, чтобы пользователь `ubuntu` мог
+открыть эти узлы. `MSFT0101` — имя TPM 2.0 в ACPI. `device-id 0x1` —
+так представляется `swtpm`.
+
+Discovery, то есть чтение свойств TPM, шло с
+`TPM2TOOLS_TCTI=device:/dev/tpmrm0`. TCTI — транспорт TPM2-TSS: куда
+уходит байтовый кадр команды. Здесь это файл устройства, не адрес
+`127.0.0.1`.
 
 ```text
-Family:         value: "2.0"
-Manufacturer:   value: "IBM"
-PCR count:      raw: 0x18
+Family:         2.0
+Manufacturer:   IBM
+PCR count:      24
 Revision:       1.83
 ```
 
-`IBM` / `1.83` — swtpm 0.10.2 на host. Гость ходит в устройство,
-не в TCP-сокет simulator.
+`IBM` и ревизия `1.83` — это `swtpm` 0.10.2. В Sprint 03 reference
+simulator называл себя `XYZ`. Набор команд тот же, имя реализации
+другое.
 
-Общий runner внутри гостя:
+Общий `infra/docker-tpm/run-checks.sh` внутри гостя:
 
 ```text
 PASS checks: 10
 FAIL checks: 0
-
 TPM LAB ARM64 PROTOTYPE: PASS
 ```
 
-PCR Extend совпал с независимым SHA-256. Подпись отвергла
-испорченное сообщение. PCR policy отвергла Unseal после Extend.
-Коды те же, что на сокете: `0x2DB` и `0x99D`.
+PCR — регистр конфигурации. Extend не записывает новое значение
+поверх старого, а считает `SHA-256(старый PCR || измерение)`. Хеш,
+посчитанный в госте отдельно от TPM, совпал с регистром после Extend.
+Подпись исходного сообщения прошла. Подпись испорченного TPM отверг
+с кодом `0x2DB` (подпись не сходится). Секрет, запечатанный к PCR,
+после Extend не открылся: код `0x99D`, проверка policy не прошла.
 
-Первая попытка signing через resource manager не нашла transient
-handle: `/dev/tpmrm0` их не публикует. Runner берёт context file,
-если `handles-transient` пуст. Повтор на сокете swtpm после этой
-правки: снова 10 PASS / 0 FAIL.
+Первый запуск подписи через `/dev/tpmrm0` не нашёл transient handle.
+Resource manager не показывает временные объекты в
+`tpm2_getcap handles-transient`, хотя `CreatePrimary` уже прошёл.
+Runner в этом случае берёт файл контекста `primary.ctx`. На сокете
+Docker handles по-прежнему видны как `0x80000000`, и там runner
+по-прежнему пользуется ими. Повтор сокета после правки: снова
+10 PASS / 0 FAIL.
 
-### ESAPI-модуль на сокете
+`TPM2_Startup` в этой схеме посылают прошивка и ядро гостя. Флаг
+`startup-clear`, которым поднимали сокет в Docker, здесь не ставится:
+иначе старт выполнился бы дважды.
 
-`src/tpm_lab/` вызывает TPM через `tpm2-pytss`, без `tpm2-tools`.
-Образ `infra/docker-tpm/Dockerfile.pytss`.
+Останавливать QEMU нужно через `run-lab.sh stop` или `poweroff` в
+госте. `kill -9` оборвал `dpkg` на первом прогоне, база пакетов на
+том же диске уже не чинилась. Помог только новый `up`.
+
+### Свой код на сокете: ESAPI
+
+`src/tpm_lab/` ходит в тот же `swtpm` через библиотеку `tpm2-pytss`,
+без вызова `tpm2_sign` и остальных команд `tpm2`. Образ
+`infra/docker-tpm/Dockerfile.pytss`.
+
+```bash
+docker build -t tpm-lab-pytss -f infra/docker-tpm/Dockerfile.pytss .
+docker run --rm tpm-lab-pytss
+```
 
 ```text
 PASS checks: 10
@@ -100,43 +133,67 @@ FAIL checks: 0
 TPM LAB ESAPI MODULE: PASS
 ```
 
-В этом прогоне есть две сверки, которых нет у shell runner:
-`TPM2_Hash` совпал с `hashlib.sha256`, подпись TPM принял OpenSSL.
-Отказы те же: `0x2DB` и `0x99D`. Модуль ходит в сокет и не заменяет
-VM.
+Две сверки shell-runner не делает. `TPM2_Hash` совпал с
+`hashlib.sha256` на тех же байтах: в этой роли TPM считает обычный
+SHA-256. Подпись, снятую в TPM, проверил OpenSSL по выгруженному
+открытому ключу. Отказы те же: `0x2DB` и `0x99D`.
 
-Запуск:
+### Та же policy через FAPI
 
-```bash
-docker build -t tpm-lab-pytss -f infra/docker-tpm/Dockerfile.pytss .
-docker run --rm tpm-lab-pytss
+Секрет `PCR_BOUND_SECRET` запечатан к нулевому PCR 16 и через ESAPI,
+и через FAPI. Запись прогона:
+[ESAPI, FAPI и ключ Кузнечика](../labs/fapi-esapi-kuznyechik.md).
+
+В ESAPI в `src/tpm_lab/ops.py` видны шаги: primary, пробная session
+для digest policy, Create, Load, рабочая policy session, Unseal,
+flush. Пока PCR 16 нулевой, секрет возвращается. После Extend —
+`0x99D`.
+
+FAPI на Ubuntu 24.04 вызывается командами `tss2`. Они идут в
+`libtss2-fapi`. Python-модуль FAPI в пакете `python3-tpm2-pytss`
+выключен: сборка пакета не нашла в себе версию библиотеки и
+отказывается импортироваться. Поэтому сравнение идёт по командам,
+которые эта библиотека реально выполняет:
+
+```text
+tss2 provision
+tss2 import        policy POLICYPCR на PCR 16
+tss2 createseal
+tss2 unseal
+tss2 pcrextend
+tss2 unseal
 ```
 
-### Одна PCR-операция через ESAPI и FAPI
+`provision` готовит иерархии и хранилище ключей FAPI. У учебного
+`swtpm` нет сертификата EK (ключ подтверждения, который есть у
+платформенного TPM), поэтому в конфиге стоит `ek_cert_less`.
+Session и flush в этих шести командах снаружи не видны: их делает
+FAPI.
 
-Секрет `PCR_BOUND_SECRET` запечатан к нулевому PCR 16 дважды.
-Запись: [ESAPI, FAPI и ключ Кузнечика](../labs/fapi-esapi-kuznyechik.md).
+Доверенный PCR отдаёт тот же секрет. После Extend отказ приходит
+раньше, чем у ESAPI. FAPI пытается выполнить сохранённую policy, и
+TPM отклоняет саму команду `PolicyPCR` с кодом `0x1C4`: значение PCR
+уже не то, которое записано в policy. Секрет в ответ не попадает.
+Правило доступа одно. Наружу выходит ошибка другого шага.
 
-ESAPI — вызовы в `src/tpm_lab/ops.py`: primary, policy session,
-Create/Load, Unseal, flush. После Extend Unseal возвращает `0x99D`.
+### Кузнечик
 
-FAPI на Ubuntu 24.04 — команды `tss2` в `libtss2-fapi`.
-Python-привязка FAPI в пакете `python3-tpm2-pytss` отключена.
-Команды: provision, import policy, createseal, unseal, pcrextend, unseal.
-После Extend TPM отклоняет `PolicyPCR` с `0x1C4`. Секрет не выходит.
-Это другой слой ошибки, не другое правило доступа.
+`tpm2_getcap algorithms` на этом `swtpm` перечисляет AES (`0x0006`) и
+Camellia (`0x0026`). Это номера из реестра TCG. Кузнечика
+(ГОСТ Р 34.12-2015, блок 128 бит, ключ 256 бит) в списке нет, в
+обычном OpenSSL его тоже нет. `libtpms` вызывает AES и Camellia оттуда.
 
-### Кузнечик снаружи TPM
+Блок считает `src/tpm_lab/kuznyechik.py`. Контрольный пример из
+RFC 7801 совпал: `7f679d90bebc24305a468d42b9d4edcd`. Ключ на 32 байта
+берётся командой `TPM2_GetRandom` и сразу seal к PCR 16. Открыть его
+и расшифровать блок можно после Unseal. После Extend тот же объект
+отвечает `0x99D`, ключ остаётся в TPM.
 
-`tpm2_getcap algorithms` на этом swtpm показывает AES и Camellia.
-Кузнечика в списке нет. Блок считает `src/tpm_lab/kuznyechik.py`
-по ГОСТ Р 34.12-2015. Вектор RFC 7801 совпал:
-`7f679d90bebc24305a468d42b9d4edcd`.
+Три части одним запуском:
 
-Ключ на 32 байта берётся из `TPM2_GetRandom` и seal к PCR 16.
-После Extend ключ не выходит, код `0x99D`.
-
-Общий прогон этих трёх частей:
+```bash
+docker run --rm --entrypoint /lab/run-fapi-kuznyechik.sh tpm-lab-pytss
+```
 
 ```text
 PASS checks: 8
@@ -144,99 +201,40 @@ FAIL checks: 0
 FAPI ESAPI KUZNYECHIK: PASS
 ```
 
-```bash
-docker run --rm --entrypoint /lab/run-fapi-kuznyechik.sh tpm-lab-pytss
-```
+Шифрование блока при этом выполняет процесс Python. В список
+алгоритмов TPM Кузнечик не попал. Как поставить его рядом с AES,
+записано отдельно: [Кузнечик внутри TPM](../labs/kuznyechik-inside-tpm.md).
 
-## Evidence highlights
+## Ограничения
 
-### Устройство
+* Графический профиль UTM не сохранён. Повторяется командная строка QEMU.
+* Второй участник ещё не прогнал `run-lab.sh up` на своей машине.
+* Quote (TPM подписывает выбранные PCR) и LUKS не делались.
+* Облачный стенд не поднимался. Что там можно взять, разобрано в
+  [записке про vTPM](../research/cloud-vtpm.md): это тоже виртуальный
+  TPM у машины, не отдельный чип в аренду.
 
-```text
-ACPI: TPM2
-tpm_tis MSFT0101:00: 2.0 TPM (device-id 0x1, rev-id 1)
-```
+## Дальше
 
-### PCR через /dev/tpmrm0
-
-```text
-Expected   : 1D3224D51365587C3F5A3247630EF892C14B673AF376E61703C15115223232D2
-PCR after  : 1D3224D51365587C3F5A3247630EF892C14B673AF376E61703C15115223232D2
-```
-
-### Policy
-
-```text
-Trusted PCR state allows Unseal
-Tampered PCR state rejected by TPM policy
-```
-
-## Current limitations
-
-* UTM GUI-профиль не экспортирован. Повторяется командная строка QEMU.
-* Второй студент ещё не прогнал `run-lab.sh up` у себя.
-* Кузнечик не является командой TPM. Шифр считает программа.
-* Quote и LUKS не делались.
-* `kill -9` по QEMU портит гостевой `dpkg`. Остановка — `run-lab.sh stop`.
-* Образ диска, ключ SSH и состояние swtpm в git не входят. Их создаёт `run-lab.sh`.
-
-## Next sprint
-
-План встройки Кузнечика в эмулятор, рядом с AES и Camellia:
-[Кузнечик внутри TPM](../labs/kuznyechik-inside-tpm.md).
-
-Отдельно разобрано, что можно взять в облаке. Google Shielded VM, Azure Trusted Launch и AWS NitroTPM дают виртуальный TPM 2.0 у машины, не отдельный чип. Туда переносится discovery и, если PCR доступен, тот же seal. Свой шифр в облачный TPM не вставляется. Запись: [облачный TPM](../research/cloud-vtpm.md).
-
-Рядом остаётся закрытие Stage 1:
-
-* второй участник повторяет `infra/vm/run-lab.sh up`;
-* architecture v0.1 и ТЗ сверяются с фактическими версиями и TCTI
+* Кузнечик в `libtpms`, тем же путём, которым туда входит Camellia.
+  Критерий: номер виден в `tpm2_getcap algorithms`, один блок
+  `TPM2_EncryptDecrypt` совпадает с вектором RFC 7801.
+* Одна Ubuntu в Google Shielded VM или Azure Trusted Launch, чтобы
+  повторить discovery через `/dev/tpm0` уже не на своём QEMU.
+* Второй участник повторяет локальный `run-lab.sh up`.
+* Architecture v0.1 и ТЗ сверяются с версиями этого прогона и с TCTI
   `device:/dev/tpmrm0`.
 
-## Slide-ready summary
+## Кратко
 
 ```text
-SPRINT 04 · QEMU ARM64 VIRTUAL TPM
+Mac → QEMU virt / HVF → Ubuntu 24.04.5 aarch64
+    → /dev/tpmrm0 → swtpm 0.10.2
 
-Развёрнуто
-Mac Apple Silicon
-→ QEMU virt / HVF
-→ Ubuntu 24.04.5 ARM64
-→ /dev/tpmrm0
-→ swtpm 0.10.2
+Гость, тот же runner, что в Sprint 02: 10 PASS / 0 FAIL
+PCR совпал с отдельным SHA-256, подпись 0x2DB, policy 0x99D
 
-Проверено тем же runner
-Discovery · RNG · PCR · Signing · Seal/Unseal · PCR Policy
-
-RESULT
-10 PASS · 0 FAIL
-
-Отличие от Docker spike
-устройство tpm-tis · TCTI device · Startup делает гость
-семантика PCR / 0x2DB / 0x99D совпала
-
-Рядом
-ESAPI на сокете · 10 PASS / 0 FAIL
-ESAPI и FAPI, один PCR-seal · 0x99D и 0x1C4
-Кузнечик снаружи, ключ в TPM
-
-Дальше
-Кузнечик внутри libtpms, как AES и Camellia
-Облако: vTPM у VM, не отдельный чип
+Сокет: ESAPI 10 PASS / 0 FAIL
+ESAPI и FAPI, один seal к PCR 16: 0x99D и 0x1C4
+Кузнечик: вектор RFC совпал, ключ после Extend не выходит
 ```
-
-## Что публикуется
-
-В git входят инструкции, скрипты и исходники. Образ диска VM, SSH-ключ, состояние `swtpm` и логи прогона остаются в `infra/vm/runtime/` и в `.gitignore`.
-
-Преподавателю достаточно этих путей:
-
-* `docs/sprints/sprint-04.md`
-* `docs/demo-notes/sprint-04-defense.md`
-* `docs/labs/qemu-arm64-vtpm.md` и `docs/labs/qemu-arm64-vtpm-runbook.md`
-* `infra/vm/run-lab.sh`, `infra/vm/guest-discover.sh`
-* `docs/labs/fapi-esapi-kuznyechik.md`
-* `src/tpm_lab/`
-* `infra/docker-tpm/Dockerfile.pytss`, `run-py-checks.sh`, `run-fapi-kuznyechik.sh`
-* `docs/labs/kuznyechik-inside-tpm.md` — план, не результат
-* `docs/research/cloud-vtpm.md` — исследование, стенд в облаке не поднимался

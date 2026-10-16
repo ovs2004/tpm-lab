@@ -1,7 +1,14 @@
 # ESAPI, FAPI и ключ Кузнечика
 
-Одна и та же операция на свежем `swtpm`: секрет запечатан к PCR 16.
-Пока PCR нулевой, Unseal возвращает секрет. После Extend TPM секрет не отдаёт.
+Прогон на свежем `swtpm`, сокет `swtpm:host=127.0.0.1,port=2321`.
+Одна операция: секрет запечатан к PCR 16. PCR — регистр, который TPM
+не перезаписывает, а дополняет через Extend. Пока регистр нулевой,
+Unseal возвращает байты секрета. После Extend текущее значение уже
+не входит в policy, и TPM секрет не отдаёт.
+
+PCR 16 выбран потому, что его можно вернуть в ноль командой
+`TPM2_PCR_Reset`. Регистры 0–7 так не сбросить: их занимает загрузка
+платформы.
 
 Запуск из корня репозитория:
 
@@ -10,43 +17,77 @@ docker build -t tpm-lab-pytss -f infra/docker-tpm/Dockerfile.pytss .
 docker run --rm --entrypoint /lab/run-fapi-kuznyechik.sh tpm-lab-pytss
 ```
 
-Успех: `PASS checks: 8` и `FAPI ESAPI KUZNYECHIK: PASS`.
+Ожидаемый итог: `PASS checks: 8` и строка `FAPI ESAPI KUZNYECHIK: PASS`.
 
 ## ESAPI
 
-Код в `src/tpm_lab/ops.py`. Вызовы видны: primary, trial-session, policy digest, Create/Load, policy-session, Unseal, flush.
+ESAPI (Enhanced System API) — слой TPM2-TSS, на котором написаны и
+`tpm2-tools`. В `src/tpm_lab/ops.py` те же шаги видны в коде
+лаборатории: создать primary в иерархии владельца, пробной session
+получить digest policy, создать объект seal, загрузить его, открыть
+policy session, вызвать Unseal, сбросить session и объекты.
 
-Доверенный PCR отдаёт тот же секрет. После Extend Unseal возвращает `0x99D`.
+Пока PCR 16 нулевой, возвращённые байты равны `PCR_BOUND_SECRET`.
+После Extend Unseal завершается кодом `0x99D`. В тексте TPM2-TSS это
+`policy check failed`: digest session не совпал с policy объекта.
 
 ## FAPI
 
-Пакет `python3-tpm2-pytss` на Ubuntu 24.04 собран без Python-привязки FAPI. Вызов идёт в `libtss2-fapi` через `tss2`:
+FAPI (Feature API) прячет primary, session и flush. Программа задаёт
+путь объекта и policy, библиотека сама ведёт остальное.
+
+На Ubuntu 24.04 пакет `python3-tpm2-pytss` собран так, что модуль
+`tpm2_pytss.FAPI` не импортируется: проверка версии не находит
+`tss2-fapi` в своём списке, хотя файл `libtss2-fapi.so` в системе
+есть. Рабочий интерфейс FAPI здесь — команды `tss2`. Они вызывают ту
+же библиотеку:
 
 ```text
 tss2 provision
-tss2 import policy POLICYPCR
-tss2 createseal
+tss2 import        описание POLICYPCR для PCR 16
+tss2 createseal    путь HS/SRK/seal16
 tss2 unseal
-tss2 pcrextend
+tss2 pcrextend     PCR 16
 tss2 unseal
 ```
 
-Session и flush делает FAPI, не наш код. Для simulator в конфиге стоит `ek_cert_less`, потому что у swtpm нет сертификата EK.
+`provision` создаёт иерархии и каталог ключей FAPI. У `swtpm` нет
+сертификата EK, которым платформа подтверждает ключ endorsement.
+Без настройки `ek_cert_less` команда `provision` останавливается с
+`0x60025`, «no EK certificate».
 
-Доверенный PCR отдаёт тот же секрет. После Extend отказ другой, чем у ESAPI: FAPI выполняет сохранённую policy, и TPM отклоняет `PolicyPCR` с `0x1C4`. Секрет при этом не возвращается. Это разница слоя ошибки, не разница правила доступа.
+Доверенный PCR возвращает тот же секрет, что и ESAPI. После Extend
+код другой. FAPI подставляет в `PolicyPCR` digest из сохранённой
+policy, TPM сравнивает его с текущим регистром и отвечает `0x1C4`:
+значение параметра не подходит к текущему состоянию. До команды
+Unseal выполнение не доходит, секрет в ответе отсутствует.
+
+Оба пути держат одно правило: секрет доступен только при том PCR,
+к которому его запечатали. Наружу выходит ошибка того шага, на
+котором каждый API эту проверку делает.
 
 ## Кузнечик
 
-`tpm2_getcap algorithms` на этом swtpm содержит AES и Camellia. Кузнечика, Streebog и ГОСТ-подписи там нет, поэтому блок шифруется нашим кодом по ГОСТ Р 34.12-2015 / RFC 7801.
+Кузнечик — блочный шифр ГОСТ Р 34.12-2015: блок 16 байт, ключ 32
+байта. Описание открытое, контрольный пример опубликован в RFC 7801.
 
-Контрольный вектор RFC совпадает:
+`tpm2_getcap algorithms` читает список алгоритмов, которые TPM
+объявляет своими. На этом `swtpm` среди блочных шифров есть AES и
+Camellia. Кузнечика, «Стрибога» и подписи ГОСТ в списке нет: у них
+нет номера в реестре TCG, и `libtpms` их не считает.
+
+Поэтому блок считается в `src/tpm_lab/kuznyechik.py`. Вектор RFC
+совпал:
 
 ```text
 7f679d90bebc24305a468d42b9d4edcd
 ```
 
-Ключ 32 байта берётся из `TPM2_GetRandom` и сразу seal к PCR 16. Расшифровать блок можно только после Unseal. После Extend тот же объект отвечает `0x99D`, ключ не выходит.
+Ключ для лабораторного блока берётся командой `TPM2_GetRandom` и
+сразу уходит в seal к PCR 16. В памяти процесса ключ после этого не
+хранится. Расшифровка идёт ключом, который вернул Unseal. После
+Extend повторный Unseal даёт `0x99D`, и расшифровать блок уже нечем.
 
-Так Кузнечик связан с TPM частично: алгоритм считает программа, ключ держит TPM.
-
-Встроить шифр в `libtpms` рядом с AES и Camellia — отдельный следующий шаг: [Кузнечик внутри TPM](kuznyechik-inside-tpm.md).
+Шифр при этом исполняет Python. TPM хранит ключ и проверяет PCR.
+Как перенести сам шифр в `libtpms`, описано в
+[плане следующей работы](kuznyechik-inside-tpm.md).
