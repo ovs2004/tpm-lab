@@ -31,3 +31,13 @@
 | R-09 | Без изменения: формальный human review вклада участников здесь не фиксируется. |
 | R-10 | Частично снижен для spike: есть автоматизированный runner и runbook. Live seminar на целевой VM ещё не репетировался. |
 | R-11 | Добавлен по факту Sprint 02: ошибка `0x902` исследована; runner использует dynamic transient handles и `tpm2_flushcontext`. |
+
+## Sprint 04 status
+
+| ID | Status after Sprint 04 |
+|---|---|
+| R-01 | Снижен для QEMU `virt`: гость видит `tpm_tis` и проходит 10/0 через `/dev/tpmrm0`. Отдельный UTM GUI-профиль не проверялся. |
+| R-02 | Без нового сигнала: гостевые `tpm2-tools` 5.6 на Ubuntu 24.04.5 arm64 отвечают. |
+| R-03 | Процедура reset есть: `infra/vm/run-lab.sh reset && up`. `kill -9` по QEMU портит гостевой dpkg, это не clean reset. |
+| R-04 | PCR 16 через устройство совпал с тем же независимым SHA-256, что и на сокете. |
+| R-11 | Дополнение: `/dev/tpmrm0` не показывает transient handles. Runner использует context file, если `getcap` пуст. |

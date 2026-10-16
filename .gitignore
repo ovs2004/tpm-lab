@@ -11,12 +11,15 @@ build/
 dist/
 coverage/
 *.log
+__pycache__/
+*.pyc
 
 # Local virtual-machine artifacts
 *.utm/
 *.qcow2
 *.img
 *.iso
+infra/vm/runtime/
 
 # Future TPM emulator runtime state and generated objects
 .swtpm/

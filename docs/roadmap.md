@@ -50,7 +50,7 @@
 
 ### Sprint 03 — VM architecture and environment design
 
-**Фактически:** Sprint 03 выполнен как comparative spike `ms-tpm-20-ref` по плану, зафиксированному в конце Sprint 02. Отчёт: [Sprint 03](sprints/sprint-03.md). Исходный VM environment design (ARCH-005) переносится на следующий спринт.
+**Фактически:** Sprint 03 выполнен как comparative spike `ms-tpm-20-ref` по плану, зафиксированному в конце Sprint 02. Отчёт: [Sprint 03](sprints/sprint-03.md). Исходный VM environment design (ARCH-005) выполнен в [Sprint 04](sprints/sprint-04.md).
 
 **Исходный Sprint Goal:** спроектировать воспроизводимую ARM64-среду до начала развёртывания.
 
@@ -71,6 +71,8 @@
 
 ### Sprint 04 — Ubuntu ARM64 VM deployment
 
+**Фактически:** Ubuntu 24.04.5 ARM64 загружена в QEMU `virt` на Apple Silicon, virtual TPM подключён через `tpm-tis-device` и host `swtpm`. Общий runner в госте: 10 PASS / 0 FAIL. На сокете дополнительно прогнаны ESAPI, FAPI (`tss2`) и Кузнечик с ключом в TPM. Отчёт: [Sprint 04](sprints/sprint-04.md). Design note: [ARCH-005](labs/qemu-arm64-vtpm.md). План встройки шифра в `libtpms`: [Кузнечик внутри TPM](labs/kuznyechik-inside-tpm.md).
+
 **Sprint Goal:** развернуть и доказательно проверить базовую Ubuntu ARM64 VM.
 
 **Candidate tasks:**
@@ -89,6 +91,8 @@
 - известные проблемы занесены в risk register.
 
 ### Sprint 05 — swtpm, TPM2-TSS and tpm2-tools setup
+
+**Фактически к началу спринта:** гость Sprint 04 уже содержит `tpm2-tools` 5.6 и TCTI `device:/dev/tpmrm0`, host `swtpm` 0.10.2 подключён как `tpm-tis-device`. Оставшаяся техническая работа этого этапа — повтор вторым участником и сверка ТЗ. Дальше два отдельных плана: Кузнечик внутри `libtpms` и одна облачная VM с vTPM. Облака дают виртуальный TPM, не отдельный чип. Запись: [облачный vTPM](research/cloud-vtpm.md).
 
 **Sprint Goal:** подключить software TPM stack и подтвердить связность без заявления о готовности функциональных демо.
 

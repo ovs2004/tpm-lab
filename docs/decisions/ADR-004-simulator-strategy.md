@@ -102,3 +102,6 @@ Stage B после принятия этого ADR выполнен: тот же
 прогнан на `ms-tpm-20-ref` через TCTI `mssim`. Результат и отличия
 транспорта записаны в [ARM64 Docker + ms-tpm-20-ref](../labs/docker-arm64-mssim.md).
 Решение оставить `swtpm` основным backend не меняется.
+
+Stage C начат в Sprint 04: Ubuntu ARM64 в QEMU видит этот `swtpm`
+как `tpm-tis-device` и `/dev/tpmrm0`. Запись: [ARCH-005](../labs/qemu-arm64-vtpm.md).

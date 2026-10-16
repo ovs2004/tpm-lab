@@ -1,0 +1,28 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    swtpm \
+    swtpm-tools \
+    tpm2-tools \
+    libtss2-tcti-swtpm0t64 \
+    openssl \
+    python3 \
+    python3-tpm2-pytss \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /lab
+
+COPY infra/docker-tpm/start-swtpm.sh /usr/local/bin/start-swtpm
+COPY infra/docker-tpm/run-py-checks.sh /lab/run-py-checks.sh
+COPY infra/docker-tpm/run-fapi-kuznyechik.sh /lab/run-fapi-kuznyechik.sh
+COPY src/tpm_lab /lab/src/tpm_lab
+
+RUN chmod +x /usr/local/bin/start-swtpm /lab/run-py-checks.sh /lab/run-fapi-kuznyechik.sh
+
+ENV PYTHONPATH=/lab/src
+ENV TSS2_TCTI=swtpm:host=127.0.0.1,port=2321
+
+CMD ["/lab/run-py-checks.sh"]

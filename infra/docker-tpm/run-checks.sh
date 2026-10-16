@@ -56,6 +56,18 @@ get_last_transient_handle() {
     get_transient_handles | tail -1
 }
 
+# /dev/tpmrm0 virtualizes transient handles, so getcap can be empty
+# even after a successful CreatePrimary. The context file still works.
+ref_or_context() {
+    local handle="$1"
+    local ctx="$2"
+    if [[ -n "$handle" ]]; then
+        printf '%s\n' "$handle"
+    elif [[ -f "$ctx" ]]; then
+        printf '%s\n' "$ctx"
+    fi
+}
+
 read_pcr16() {
     tpm2_pcrread sha256:16 2>/dev/null \
         | awk '/16:/ {gsub("0x","",$2); print toupper($2)}'
@@ -250,7 +262,7 @@ if ! tpm2_createprimary \
     fail "Signing: failed to create Primary Object"
 
 else
-    PRIMARY_HANDLE="$(get_first_transient_handle)"
+    PRIMARY_HANDLE="$(ref_or_context "$(get_first_transient_handle)" primary.ctx)"
 
     echo "Primary handle: $PRIMARY_HANDLE"
 
@@ -277,7 +289,7 @@ else
         fail "Signing: failed to load signing key"
 
     else
-        SIGNING_HANDLE="$(get_last_transient_handle)"
+        SIGNING_HANDLE="$(ref_or_context "$(get_last_transient_handle)" signing.ctx)"
 
         echo "Signing handle: $SIGNING_HANDLE"
 
@@ -349,7 +361,7 @@ if ! tpm2_createprimary \
     fail "Sealing: failed to create Primary Object"
 
 else
-    PRIMARY_HANDLE="$(get_first_transient_handle)"
+    PRIMARY_HANDLE="$(ref_or_context "$(get_first_transient_handle)" primary.ctx)"
 
     if [[ -z "$PRIMARY_HANDLE" ]]; then
         fail "Sealing: Primary transient handle was not found"
@@ -373,7 +385,7 @@ else
         fail "Sealing: failed to load sealed object"
 
     else
-        SEALED_HANDLE="$(get_last_transient_handle)"
+        SEALED_HANDLE="$(ref_or_context "$(get_last_transient_handle)" sealed.ctx)"
 
         UNSEALED="$(
             tpm2_unseal \
@@ -418,7 +430,7 @@ else
         fail "PCR policy: failed to create Primary Object"
 
     else
-        PRIMARY_HANDLE="$(get_first_transient_handle)"
+        PRIMARY_HANDLE="$(ref_or_context "$(get_first_transient_handle)" primary.ctx)"
 
         tpm2_pcrread \
             -o pcr.dat \
@@ -459,7 +471,7 @@ else
             fail "PCR policy: failed to load policy-bound object"
 
         else
-            SEALED_HANDLE="$(get_last_transient_handle)"
+            SEALED_HANDLE="$(ref_or_context "$(get_last_transient_handle)" sealed.ctx)"
 
             ###################################################################
             # Trusted state

@@ -33,13 +33,14 @@ macOS Apple Silicon
 
 ## Текущий этап
 
-Выполнены три спринта. Целевая архитектура `Mac Apple Silicon -> UTM/QEMU -> Ubuntu ARM64 VM -> virtual TPM/swtpm` ещё не развёрнута. FAPI, ESAPI, Quote и LUKS не реализованы.
+Выполнены четыре спринта. Целевой путь `Mac -> QEMU -> Ubuntu ARM64 -> /dev/tpmrm0 -> swtpm` поднят и прогнан тем же runner (10 PASS / 0 FAIL). Одна PCR-операция дополнительно сравнена через ESAPI и FAPI. Кузнечик считается программой, ключ запечатан в TPM. Quote и LUKS не реализованы. Встройка Кузнечика в `libtpms` — план следующего шага.
 
 - **Sprint 01** — проектный baseline: charter, Architecture v0.1, ТЗ v0.1, backlog, DoD, risks и ADR по Apple Silicon / Linux VM / `swtpm`.
 - **Sprint 02** — ARM64 Docker technical spike с software TPM `swtpm` и общий набор TPM-проверок (10 PASS / 0 FAIL).
 - **Sprint 03** — тот же набор на Microsoft TPM 2.0 Reference Implementation (`ms-tpm-20-ref`) через TCTI `mssim` (снова 10 PASS / 0 FAIL).
+- **Sprint 04** — QEMU ARM64 VM и virtual TPM (10 PASS / 0 FAIL через `/dev/tpmrm0`). Рядом ESAPI на сокете (10 PASS / 0 FAIL), сравнение ESAPI/FAPI на PCR-seal и Кузнечик с ключом в TPM (8 PASS / 0 FAIL).
 
-Это исследовательские стенды: они валидируют TPM software stack и не заменяют будущую VM.
+Docker-стенды остаются исследовательскими. Демонстрации дальше идут из гостя.
 
 ## Current technical spike
 
@@ -47,12 +48,17 @@ macOS Apple Silicon
 
 - [ARM64 Docker + swtpm](docs/labs/docker-arm64-swtpm.md) — [runbook](docs/labs/docker-arm64-swtpm-runbook.md) — Sprint 02
 - [ARM64 Docker + ms-tpm-20-ref](docs/labs/docker-arm64-mssim.md) — [runbook](docs/labs/docker-arm64-mssim-runbook.md) — Sprint 03
+- [QEMU ARM64 + virtual TPM](docs/labs/qemu-arm64-vtpm.md) — [runbook](docs/labs/qemu-arm64-vtpm-runbook.md) — Sprint 04
+- [ESAPI, FAPI и ключ Кузнечика](docs/labs/fapi-esapi-kuznyechik.md)
+- [Дальше: Кузнечик внутри TPM](docs/labs/kuznyechik-inside-tpm.md)
+- [Облачный vTPM](docs/research/cloud-vtpm.md)
 
 Отчёты спринтов:
 
 - [Sprint 01](docs/sprints/sprint-01.md)
 - [Sprint 02](docs/sprints/sprint-02.md)
 - [Sprint 03](docs/sprints/sprint-03.md)
+- [Sprint 04](docs/sprints/sprint-04.md)
 
 ## План на 17 недель
 
@@ -78,10 +84,10 @@ docs/
   labs/                    — лабораторные стенды и runbook
 infra/
   docker-tpm/              — ARM64 Docker + swtpm и ms-tpm-20-ref technical spikes
-  vm/                      — будущие материалы целевой UTM/QEMU VM
-  setup/                   — будущие setup-материалы целевой среды
+  vm/                      — QEMU ARM64 + swtpm, Sprint 04
+  setup/                   — указатель на setup целевой среды
 demos/                     — будущие автоматизированные демонстрации
-src/                       — будущий runner и FAPI/ESAPI programs
+src/                       — ESAPI-модуль поверх simulator socket; FAPI ещё нет
 tests/                     — будущие автоматические проверки
 scripts/                   — будущие setup/reset/run scripts
 ```
@@ -111,6 +117,8 @@ scripts/                   — будущие setup/reset/run scripts
 - [Sprint 01 defense notes](docs/demo-notes/sprint-01-defense.md)
 - [Sprint 02](docs/sprints/sprint-02.md)
 - [Sprint 03](docs/sprints/sprint-03.md)
+- [Sprint 04](docs/sprints/sprint-04.md)
+- [Sprint 04 defense notes](docs/demo-notes/sprint-04-defense.md)
 - [ADR-004: TPM simulator strategy](docs/decisions/ADR-004-simulator-strategy.md)
 - [Исследование TPM simulators](docs/research/tpm-simulators-and-tooling.md)
 - [Сравнение с TPM Handbook](docs/research/tpm-handbook-comparison.md)

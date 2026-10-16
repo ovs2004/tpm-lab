@@ -36,7 +36,45 @@ Backlog покрывает все 17 недель. Зависимость `не�
 
 ## Sprint 03 — выполненные comparative-задачи
 
-SIM-002, SIM-003 и SIM-004 закрыты в Sprint 03 фактическим прогоном `ms-tpm-20-ref`. ARCH-005 остаётся Planned на следующий спринт.
+SIM-002, SIM-003 и SIM-004 закрыты в Sprint 03 фактическим прогоном `ms-tpm-20-ref`. ARCH-005 закрыт в Sprint 04 вместе с запуском VM.
+
+## Sprint 04 — QEMU ARM64 virtual TPM
+
+### ARCH-005 — QEMU ARM64 vTPM design note
+- **Status:** Done (Sprint 04)
+- **Артефакт:** `docs/labs/qemu-arm64-vtpm.md`, `infra/vm/run-lab.sh`.
+- **Факт:** design note и запуск. Ubuntu 24.04.5 aarch64 видит `tpm_tis`, runner через `/dev/tpmrm0` дал 10 PASS / 0 FAIL.
+
+### INFRA-002 — Развернуть Ubuntu ARM64 VM
+- **Status:** Done (Sprint 04)
+- **Факт:** QEMU `virt` + HVF, не отдельный UTM-клик. `uname -m` → `aarch64`.
+
+### INFRA-003 — Подключить swtpm
+- **Status:** Done (Sprint 04)
+- **Факт:** host swtpm 0.10.2, QEMU `tpm-tis-device`, состояние в каталоге runtime.
+
+### INFRA-004 — Установить TPM2-TSS и tpm2-tools
+- **Status:** Done (Sprint 04)
+- **Факт:** гостевой `tpm2-tools` 5.6, TCTI `device:/dev/tpmrm0`.
+
+Повтор вторым участником (INFRA-005) ещё не записан.
+
+### ESAPI / FAPI / Кузнечик снаружи TPM
+- **Status:** Done (Sprint 04)
+- **Артефакт:** `src/tpm_lab/`, `docs/labs/fapi-esapi-kuznyechik.md`.
+- **Факт:** ESAPI-модуль 10 PASS / 0 FAIL. Одна PCR-операция через ESAPI (`0x99D`) и FAPI/`tss2` (`0x1C4`). Кузнечик считает программа, ключ seal в TPM. Прогон 8 PASS / 0 FAIL.
+
+### Кузнечик внутри libtpms
+- **Status:** Planned
+- **Артефакт плана:** `docs/labs/kuznyechik-inside-tpm.md`.
+- **Критерий:** экспериментальный номер виден в `tpm2_getcap algorithms`, один блок `EncryptDecrypt` совпадает с вектором RFC 7801.
+
+### CLOUD-001 — Проверочная VM с vTPM
+- **Status:** Planned
+- **Описание:** Одна Ubuntu в Google Shielded VM или Azure Trusted Launch. Повторить discovery и, если PCR 16 доступен, seal/unseal. Свой шифр в облачный TPM не добавлять.
+- **Артефакт исследования:** `docs/research/cloud-vtpm.md`.
+
+## Sprint 03 — задачи comparative spike
 
 ### SIM-002 — Bootstrap ms-tpm-20-ref
 - **Status:** Done (Sprint 03)

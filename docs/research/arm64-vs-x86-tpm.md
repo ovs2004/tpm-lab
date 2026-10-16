@@ -50,3 +50,8 @@ commit `ee21db0a941decd3cac67925ea3310873af60ab3`. Повторяемость
 
 Пока стенд сокетный, совпадение `0x2DB` на двух simulator ничего не
 говорит о том, что UTM/QEMU на Apple Silicon уже собран.
+
+В Sprint 04 гипотеза проверена. QEMU 10.1.0 на этом Mac не содержит
+`tpm-crb-device` для aarch64. Гость Ubuntu увидел `tpm-tis-device`
+как `tpm_tis` / `MSFT0101` и прошёл тот же runner через `/dev/tpmrm0`.
+Подробности: [ARCH-005](../labs/qemu-arm64-vtpm.md).

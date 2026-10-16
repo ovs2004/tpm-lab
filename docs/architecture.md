@@ -1,7 +1,7 @@
 # Архитектура TPM Lab
 
 **Версия:** 0.1  
-**Статус:** целевая архитектура остаётся baseline; Sprint 02 частично validated ARM64 software stack в Docker direct-simulator mode, но не заменяет VM/vTPM стенд
+**Статус:** Architecture v0.1 остаётся baseline. Sprint 04 проверил целевой путь QEMU ARM64 + virtual TPM; FAPI/ESAPI comparison ещё не сделан.
 
 ## 1. Deployment architecture
 
@@ -159,10 +159,11 @@ ESAPI (Enhanced System API) — более низкоуровневый API TPM2
 - Runner → FAPI/ESAPI apps: versioned CLI/data contract.
 - Apps/tools → TPM2-TSS: library API.
 - TPM2-TSS → TCTI: TCTI interface/configuration.
-- TCTI → `swtpm`: validated transport endpoint.
+- TCTI → TPM в госте: `device:/dev/tpmrm0` (проверено в Sprint 04).
+- QEMU → `swtpm`: unix control socket и устройство `tpm-tis-device`.
 - Runner → evidence: structured status и sanitized logs.
 
-Точный TCTI и transport являются открытым architecture detail до практической проверки UTM/QEMU integration.
+Гостевой TCTI больше не ходит в сокет swtpm напрямую. Сокет остаётся на host, между ним и гостем стоит QEMU.
 
 ## 9. Architecture evolution
 
@@ -195,3 +196,20 @@ Mac Apple Silicon -> UTM/QEMU -> Ubuntu ARM64 VM -> TPM stack -> virtual TPM / s
 - сравнительный backend `ms-tpm-20-ref`.
 
 Финальная архитектура проекта остаётся VM-based. Подробности spike: [Sprint 02](sprints/sprint-02.md), [ADR-004](decisions/ADR-004-simulator-strategy.md).
+
+## 11. Sprint 04 validation status
+
+Целевой путь проверен запуском, не только схемой. Отчёт: [Sprint 04](sprints/sprint-04.md), design note: [ARCH-005](labs/qemu-arm64-vtpm.md).
+
+Подтверждено:
+
+- QEMU `virt` + HVF загружает Ubuntu 24.04.5 ARM64;
+- `tpm-tis-device` виден гостю как `tpm_tis` / `MSFT0101`;
+- `tpm2-tools` 5.6 работают через `device:/dev/tpmrm0`;
+- тот же runner даёт 10 PASS / 0 FAIL, включая `0x2DB` и `0x99D`.
+
+Ещё не validated:
+
+- отдельный UTM GUI-профиль;
+- повтор вторым участником;
+- FAPI и сравнение FAPI/ESAPI.
